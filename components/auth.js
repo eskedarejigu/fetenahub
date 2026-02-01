@@ -2,7 +2,7 @@ export async function telegramLogin() {
   try {
     const initData = window.Telegram.WebApp.initData;
 
-    const res = await fetch("https://<YOUR_BACKEND_URL>/functions/v1/telegram-auth", {
+    const res = await fetch("https://fetenahubbackend-production.up.railway.app/functions/v1/telegram-auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ initData })
@@ -22,3 +22,4 @@ export async function telegramLogin() {
     return false;
   }
 }
+
