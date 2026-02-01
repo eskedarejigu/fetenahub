@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>University Exams Mini App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header>
+      <h1>University Exams Mini App</h1>
+    </header>
+
+    <!-- Login Status -->
+    <section id="login-section">
+      <p id="login-msg">Logging in...</p>
+    </section>
+
+    <!-- Upload Exam Section -->
+    <section id="upload-section" style="display:none;">
+      <h2>Upload Exam</h2>
+
+      <div>
+        <input type="text" id="exam-title" placeholder="Exam Title (optional)" />
+        <select id="university-select"></select>
+        <select id="course-select"></select>
+      </div>
+
+      <input type="file" id="exam-files" multiple accept=".jpg,.png,.pdf" />
+      <div id="preview-container"></div>
+
+      <button id="upload-btn">Upload Exam</button>
+    </section>
+
+    <!-- Feed Section -->
+    <section id="feed-section" style="display:none;">
+      <h2>Exam Feed</h2>
+      <div id="feed-container">
+        <p>No exams yet.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Core Scripts -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
