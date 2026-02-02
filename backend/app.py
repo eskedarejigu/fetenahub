@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import json
 from dotenv import load_dotenv
+from urllib.parse import parse_qsl
 
 load_dotenv()
 
@@ -24,14 +25,36 @@ ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def verify_telegram_data(init_data):
-    # Verify Telegram Web App data
-    data_check_string = init_data.replace('&', '\n').split('\n')
-    data_check_string.sort()
-    data_check_string = '\n'.join(data_check_string)
-    secret_key = hmac.new(b'WebAppData', TELEGRAM_BOT_TOKEN.encode(), hashlib.sha256).digest()
-    hash_value = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
-    return hash_value == request.args.get('hash')
+def verify_telegram_data(init_data: str) -> bool:
+    """Verify Telegram Web App init data per Telegram docs.
+
+    init_data is a URL-encoded string like "id=...&first_name=...&auth_date=...&hash=..."
+    """
+    if not init_data:
+        return False
+
+    # Parse the key=value pairs
+    try:
+        data_items = dict(parse_qsl(init_data))
+    except Exception:
+        return False
+
+    received_hash = data_items.pop('hash', None)
+    if not received_hash:
+        return False
+
+    # Build data_check_string from remaining fields sorted by key
+    data_check_list = [f"{k}={v}" for k, v in sorted(data_items.items())]
+    data_check_string = "\n".join(data_check_list)
+
+    # Per Telegram: secret_key = sha256(bot_token)
+    secret_key = hashlib.sha256(TELEGRAM_BOT_TOKEN.encode()).digest()
+    computed_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(computed_hash, received_hash)
+
+@app.route('/')
+def home():
+    return jsonify({'message': 'ExamHub Backend is running!', 'endpoints': ['/exams', '/upload']})
 
 @app.route('/exams', methods=['GET'])
 def get_exams():
@@ -92,4 +115,6 @@ def upload_exam():
     return jsonify({'message': 'Upload successful'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    # Do not enable debug in production
+    app.run(host='0.0.0.0', port=port)

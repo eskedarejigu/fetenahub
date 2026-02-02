@@ -1,7 +1,11 @@
-// Telegram Web App initialization
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+// Telegram Web App initialization (guarded for non-Telegram contexts)
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {
+    ready: () => {},
+    expand: () => {},
+    initData: '',
+    initDataUnsafe: { user: {} }
+};
+try { tg.ready(); tg.expand(); } catch (e) {}
 
 // Backend URL (replace with your Railway URL)
 const BACKEND_URL = 'https://your-railway-app-url.up.railway.app';
@@ -36,8 +40,8 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     formData.append('university', document.getElementById('uploadUniversity').value);
     formData.append('year', document.getElementById('uploadYear').value);
     formData.append('subject', document.getElementById('uploadSubject').value);
-    formData.append('initData', tg.initData);
-    formData.append('user', JSON.stringify(tg.initDataUnsafe.user));
+    formData.append('initData', tg.initData || '');
+    formData.append('user', JSON.stringify(tg.initDataUnsafe.user || {}));
     
     const response = await fetch(`${BACKEND_URL}/upload`, {
         method: 'POST',
