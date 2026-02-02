@@ -4,7 +4,7 @@ tg.ready();
 tg.expand();
 
 // Backend URL (replace with your Railway URL)
-const BACKEND_URL = 'https://your-railway-app-url.up.railway.app';
+const BACKEND_URL = 'https://web-production-fd987.up.railway.app';
 
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -46,4 +46,5 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     
     const result = await response.json();
     alert(result.message || result.error);
+
 });
