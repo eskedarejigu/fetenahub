@@ -1,0 +1,54 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--tg-theme-bg-color, #ffffff);
+    color: var(--tg-theme-text-color, #000000);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid var(--tg-theme-hint-color, #cccccc);
+    border-radius: 8px;
+}
+
+input, button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid var(--tg-theme-hint-color, #cccccc);
+    border-radius: 4px;
+    background-color: var(--tg-theme-bg-color, #ffffff);
+    color: var(--tg-theme-text-color, #000000);
+}
+
+button {
+    background-color: var(--tg-theme-button-color, #0088cc);
+    color: var(--tg-theme-button-text-color, #ffffff);
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+#results {
+    margin-top: 20px;
+}
+
+.exam-item {
+    padding: 10px;
+    border-bottom: 1px solid var(--tg-theme-hint-color, #cccccc);
+}
+
+.exam-item a {
+    color: var(--tg-theme-link-color, #0088cc);
+    text-decoration: none;
+}
