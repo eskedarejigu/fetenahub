@@ -3,8 +3,3 @@ supabase==2.5.1
 python-telegram-bot==21.4
 werkzeug==3.0.3
 python-dotenv==1.0.1
-hmac==5.0.0
-hashlib
-json
-datetime
-uuid
