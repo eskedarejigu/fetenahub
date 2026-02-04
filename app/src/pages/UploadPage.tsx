@@ -47,22 +47,27 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
   }, []);
 
   // Setup main button
-  useEffect(() => {
-    const canSubmit = selectedUniversity && selectedCourse && year && examType && files.length > 0;
-    
-    if (canSubmit) {
-      showMainButton('Upload Exam', handleSubmit, {
-        color: 'var(--tg-button-color)',
-        textColor: 'var(--tg-button-text-color)',
-      });
-    } else {
-      hideMainButton();
-    }
+  // Optimized effect to prevent infinite loops
+useEffect(() => {
+  const canSubmit = 
+    selectedUniversity !== '' && 
+    selectedCourse !== '' && 
+    year !== '' && 
+    examType !== '' && 
+    files.length > 0;
 
-    return () => {
-      hideMainButton();
-    };
-  }, [selectedUniversity, selectedCourse, year, examType, files]);
+  if (canSubmit) {
+    showMainButton('Upload Exam', handleSubmit);
+  } else {
+    hideMainButton();
+  }
+
+  // Cleanup: ensure the button is hidden when leaving the page
+  return () => hideMainButton();
+  
+  // Remove 'files' from dependency if you only want it to update 
+  // when form fields or general file presence changes
+}, [selectedUniversity, selectedCourse, year, examType, files.length, showMainButton, hideMainButton]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
