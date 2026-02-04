@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, FileText, Plus } from 'lucide-react';
 import { getUniversities, getCourses, createUniversity, createCourse, createExam, getUploadUrl, confirmUpload } from '@/lib/api';
 import { useTelegram } from '@/hooks/useTelegram';
@@ -46,26 +46,6 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
     loadData();
   }, []);
 
-  // Setup main button - using ref to avoid closure issues
-  const handleSubmitRef = useRef<() => Promise<void>>();
-  
-  useEffect(() => {
-    const canSubmit = selectedUniversity && selectedCourse && year && examType && files.length > 0;
-    
-    if (canSubmit) {
-      showMainButton('Upload Exam', () => handleSubmitRef.current?.(), {
-        color: 'var(--tg-button-color)',
-        textColor: 'var(--tg-button-text-color)',
-      });
-    } else {
-      hideMainButton();
-    }
-
-    return () => {
-      hideMainButton();
-    };
-  }, [selectedUniversity, selectedCourse, year, examType, files, showMainButton, hideMainButton]);
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles) return;
@@ -110,13 +90,11 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
     });
 
     try {
-      // Get upload URL
       const { signed_url, path } = await getUploadUrl(
         uploadFile.file.name,
         uploadFile.file.type
       );
 
-      // Upload file
       const response = await fetch(signed_url, {
         method: 'PUT',
         body: uploadFile.file,
@@ -129,7 +107,6 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
         throw new Error('Upload failed');
       }
 
-      // Get public URL
       const { url } = await confirmUpload(path);
 
       setFiles(prev => {
@@ -181,7 +158,7 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!selectedUniversity || !selectedCourse || !year || !examType || files.length === 0) {
       showAlert('Please fill in all required fields');
       return;
@@ -191,14 +168,12 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
     setMainButtonLoading(true);
 
     try {
-      // Upload all files
       const fileUrls: string[] = [];
       for (let i = 0; i < files.length; i++) {
         const url = await uploadFileToStorage(files[i], i);
         fileUrls.push(url);
       }
 
-      // Create exam
       await createExam({
         university_id: selectedUniversity,
         course_id: selectedCourse,
@@ -218,10 +193,25 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
       setIsLoading(false);
       setMainButtonLoading(false);
     }
-  };
+  }, [selectedUniversity, selectedCourse, year, examType, files, teacherName, showAlert, hapticFeedback, setMainButtonLoading, onNavigate]);
 
-  // Update ref whenever handleSubmit changes
-  handleSubmitRef.current = handleSubmit;
+  // Setup main button
+  useEffect(() => {
+    const canSubmit = selectedUniversity && selectedCourse && year && examType && files.length > 0;
+    
+    if (canSubmit) {
+      showMainButton('Upload Exam', handleSubmit, {
+        color: 'var(--tg-button-color)',
+        textColor: 'var(--tg-button-text-color)',
+      });
+    } else {
+      hideMainButton();
+    }
+
+    return () => {
+      hideMainButton();
+    };
+  }, [selectedUniversity, selectedCourse, year, examType, files, handleSubmit, showMainButton, hideMainButton]);
 
   return (
     <div className="page-container upload-page">
