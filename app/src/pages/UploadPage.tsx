@@ -46,12 +46,14 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
     loadData();
   }, []);
 
-  // Setup main button
+  // Setup main button - using ref to avoid closure issues
+  const handleSubmitRef = useRef<() => Promise<void>>();
+  
   useEffect(() => {
     const canSubmit = selectedUniversity && selectedCourse && year && examType && files.length > 0;
     
     if (canSubmit) {
-      showMainButton('Upload Exam', handleSubmit, {
+      showMainButton('Upload Exam', () => handleSubmitRef.current?.(), {
         color: 'var(--tg-button-color)',
         textColor: 'var(--tg-button-text-color)',
       });
@@ -62,7 +64,7 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
     return () => {
       hideMainButton();
     };
-  }, [selectedUniversity, selectedCourse, year, examType, files]);
+  }, [selectedUniversity, selectedCourse, year, examType, files, showMainButton, hideMainButton]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -217,6 +219,9 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
       setMainButtonLoading(false);
     }
   };
+
+  // Update ref whenever handleSubmit changes
+  handleSubmitRef.current = handleSubmit;
 
   return (
     <div className="page-container upload-page">
