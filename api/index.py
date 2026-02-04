@@ -26,35 +26,49 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ============== TELEGRAM AUTH ==============
 
 
-def validate_telegram_data(init_data: str, bot_token: str) -> bool:
-    # 1. Parse the query string into a dictionary
-    params = dict(parse_qsl(init_data))
-    if 'hash' not in params:
-        return False
-    
-    received_hash = params.pop('hash')
-    
-    # 2. Format the data-check-string (sorted and \n separated)
-    # Note: Use unquoted values for the check string
-    data_check_string = "\n".join(
-        f"{k}={v}" for k, v in sorted(params.items())
-    )
 
-    # 3. Derive the secret key
-    secret_key = hmac.new(
-        key=b"WebAppData",
-        msg=bot_token.encode(),
-        digestmod=hashlib.sha256
-    ).digest()
 
-    # 4. Calculate the hash
-    calculated_hash = hmac.new(
-        key=secret_key,
-        msg=data_check_string.encode(),
-        digestmod=hashlib.sha256
-    ).hexdigest()
 
-    return calculated_hash == received_hash
+def validate_telegram_data(init_data: str) -> dict:
+    try:
+        # 1. Parse and decode the init_data string
+        # parse_qsl handles the '&' splitting and '=' parsing correctly
+        params = dict(parse_qsl(init_data))
+        
+        if 'hash' not in params:
+            return None
+        
+        received_hash = params.pop('hash')
+        
+        # 2. Construct the data-check-string (sorted alphabetically)
+        # Use "\n" as the delimiter as per Telegram spec
+        data_check_string = "\n".join([f"{k}={v}" for k, v in sorted(params.items())])
+        
+        # 3. Create secret key using the BOT_TOKEN
+        secret_key = hmac.new(
+            key=b"WebAppData",
+            msg=BOT_TOKEN.encode(),
+            digestmod=hashlib.sha256
+        ).digest()
+        
+        # 4. Calculate the hash
+        calculated_hash = hmac.new(
+            key=secret_key,
+            msg=data_check_string.encode(),
+            digestmod=hashlib.sha256
+        ).hexdigest()
+        
+        if calculated_hash != received_hash:
+            return None
+        
+        # 5. Return the user dictionary
+        if 'user' in params:
+            return json.loads(params['user'])
+        
+        return None
+    except Exception as e:
+        print(f"Auth error: {e}")
+        return None
 
 
 
