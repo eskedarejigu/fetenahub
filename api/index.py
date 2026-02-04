@@ -12,6 +12,8 @@ import os
 import uuid
 from datetime import datetime
 from supabase import create_client, Client
+from urllib.parse import parse_qsl, unquote
+
 
 app = Flask(__name__)
 
@@ -25,48 +27,40 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ============== TELEGRAM AUTH ==============
 
 def validate_telegram_data(init_data: str) -> dict:
-    """Validate Telegram WebApp initData"""
     try:
-        # Parse init data
-        data_dict = {}
-        for item in init_data.split('&'):
-            if '=' in item:
-                key, value = item.split('=', 1)
-                data_dict[key] = value
+        # 1. Parse and decode the init_data string
+        # parse_qsl handles the '&' splitting and '=' parsing correctly
+        params = dict(parse_qsl(init_data))
         
-        # Check hash
-        if 'hash' not in data_dict:
+        if 'hash' not in params:
             return None
         
-        received_hash = data_dict.pop('hash')
+        received_hash = params.pop('hash')
         
-        # Create data_check_string
-        data_check_arr = []
-        for key in sorted(data_dict.keys()):
-            data_check_arr.append(f"{key}={data_dict[key]}")
-        data_check_string = '\n'.join(data_check_arr)
+        # 2. Construct the data-check-string (sorted alphabetically)
+        # Use "\n" as the delimiter as per Telegram spec
+        data_check_string = "\n".join([f"{k}={v}" for k, v in sorted(params.items())])
         
-        # Create secret key
+        # 3. Create secret key using the BOT_TOKEN
         secret_key = hmac.new(
-            b'WebAppData',
-            BOT_TOKEN.encode(),
-            hashlib.sha256
+            key=b"WebAppData",
+            msg=BOT_TOKEN.encode(),
+            digestmod=hashlib.sha256
         ).digest()
         
-        # Calculate hash
+        # 4. Calculate the hash
         calculated_hash = hmac.new(
-            secret_key,
-            data_check_string.encode(),
-            hashlib.sha256
+            key=secret_key,
+            msg=data_check_string.encode(),
+            digestmod=hashlib.sha256
         ).hexdigest()
         
         if calculated_hash != received_hash:
             return None
         
-        # Parse user data
-        if 'user' in data_dict:
-            user_data = json.loads(data_dict['user'])
-            return user_data
+        # 5. Return the user dictionary
+        if 'user' in params:
+            return json.loads(params['user'])
         
         return None
     except Exception as e:
