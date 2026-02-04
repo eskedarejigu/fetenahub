@@ -12,6 +12,7 @@ import os
 import uuid
 from datetime import datetime
 from supabase import create_client, Client
+from urllib.parse import unquote, parse_qsl
 
 app = Flask(__name__)
 
@@ -24,54 +25,39 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ============== TELEGRAM AUTH ==============
 
-def validate_telegram_data(init_data: str) -> dict:
-    """Validate Telegram WebApp initData"""
-    try:
-        # Parse init data
-        data_dict = {}
-        for item in init_data.split('&'):
-            if '=' in item:
-                key, value = item.split('=', 1)
-                data_dict[key] = value
-        
-        # Check hash
-        if 'hash' not in data_dict:
-            return None
-        
-        received_hash = data_dict.pop('hash')
-        
-        # Create data_check_string
-        data_check_arr = []
-        for key in sorted(data_dict.keys()):
-            data_check_arr.append(f"{key}={data_dict[key]}")
-        data_check_string = '\n'.join(data_check_arr)
-        
-        # Create secret key
-        secret_key = hmac.new(
-            b'WebAppData',
-            BOT_TOKEN.encode(),
-            hashlib.sha256
-        ).digest()
-        
-        # Calculate hash
-        calculated_hash = hmac.new(
-            secret_key,
-            data_check_string.encode(),
-            hashlib.sha256
-        ).hexdigest()
-        
-        if calculated_hash != received_hash:
-            return None
-        
-        # Parse user data
-        if 'user' in data_dict:
-            user_data = json.loads(data_dict['user'])
-            return user_data
-        
-        return None
-    except Exception as e:
-        print(f"Auth error: {e}")
-        return None
+
+def validate_telegram_data(init_data: str, bot_token: str) -> bool:
+    # 1. Parse the query string into a dictionary
+    params = dict(parse_qsl(init_data))
+    if 'hash' not in params:
+        return False
+    
+    received_hash = params.pop('hash')
+    
+    # 2. Format the data-check-string (sorted and \n separated)
+    # Note: Use unquoted values for the check string
+    data_check_string = "\n".join(
+        f"{k}={v}" for k, v in sorted(params.items())
+    )
+
+    # 3. Derive the secret key
+    secret_key = hmac.new(
+        key=b"WebAppData",
+        msg=bot_token.encode(),
+        digestmod=hashlib.sha256
+    ).digest()
+
+    # 4. Calculate the hash
+    calculated_hash = hmac.new(
+        key=secret_key,
+        msg=data_check_string.encode(),
+        digestmod=hashlib.sha256
+    ).hexdigest()
+
+    return calculated_hash == received_hash
+
+
+
 
 def require_auth(f):
     """Decorator to require Telegram authentication"""
