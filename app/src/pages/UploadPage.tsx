@@ -419,3 +419,11 @@ export function UploadPage({ onNavigate }: UploadPageProps) {
     </div>
   );
 }
+if (isLoading) {
+  return (
+    <div className="page-container flex-center">
+      <div className="spinner"></div>
+      <p>Uploading your exam... please wait.</p>
+    </div>
+  );
+}
