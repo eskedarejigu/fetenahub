@@ -492,7 +492,7 @@ def confirm_upload():
     
     try:
         result = supabase.storage.from_('exams').get_public_url(path)
-        return jsonify({'url': result}) # Depending on library version, it might be result['publicURL']
+        return jsonify({'url': result})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
