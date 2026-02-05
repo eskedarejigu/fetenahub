@@ -491,9 +491,8 @@ def confirm_upload():
         return jsonify({'error': 'Path is required'}), 400
     
     try:
-        # Get public URL
         result = supabase.storage.from_('exams').get_public_url(path)
-        return jsonify({'url': result})
+        return jsonify({'url': result}) # Depending on library version, it might be result['publicURL']
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
